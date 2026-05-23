@@ -1,0 +1,47 @@
+Web VPython 3.2
+gc = gcurve(color=color.red)
+scene.autoscale = False
+w = 0
+ring(pos = vec(0,0,0), axis = vec(0, 0, 1), radius = 5, thickness = 0.1)
+sphere_list = []
+total_energy = 0
+m = 1000
+def myfunc(evt):
+    if mybutton.text == "true":
+        mybutton.text = "false"
+    elif mybutton.text == "false":
+        mybutton.text = "true"
+def calc():
+    global com, inertia
+    inertia = 0
+    com = vec(0,0,0)
+    for i in sphere_list:
+        com += i.pos
+        inertia += (i.pos.x**2 + i.pos.y**2)
+    com = com / len(sphere_list)
+mybutton = button(bind=myfunc, text = 'true', background=color.blue)
+#com_label = text(pos = vec(0,0,0), text='COM', align='center', color=color.green)
+labe = sphere(pos = vec(0,0,0), radius = 0.5)
+prevcom = vec(0,0,0)
+t = 0
+dt = 0.1
+v = 0
+while True:
+    rate(30)
+    if mybutton.text == "true":
+        mpos = scene.mouse.project( normal=vec(0,0,1), point=vec(0,0,0))
+        if mpos != None:
+            if mpos.x**2 + mpos.y**2 < 25:
+                sphere_list.append(sphere(pos=mpos, radius=0.1, color=color.green))
+    else:
+        calc()
+        dist = ((com.x)**2 + (com.y)**2 + (com.z)**2)**(1/2)
+        tao = (dist * sin(diff_angle(com, vec(0,-1,0))) * 9.81 * m)
+        a = tao / inertia
+        v = a * dt
+        theta = v * dt
+        for i in sphere_list:
+            i.rotate(origin = vec(0,0,0), angle = theta, axis = vec(0,0,1))
+        print(sphere_list)
+#        com_label.pos = com
+        print(com, inertia, theta)
