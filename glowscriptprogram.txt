@@ -17,6 +17,7 @@ def calc():
         com += i.pos
         inertia += m * (i.pos.x**2 + i.pos.y**2)
     com = com / len(sphere_list)
+    labe.pos = com
 def myfunc(evt):
     global help
     if mybutton.text == "true":
@@ -43,7 +44,8 @@ dt = 0.01
 v = 0
 while True:
     rate(100)
-    if mouse:
+    calc()
+    if mouse and mybutton.text != "false":
         mpos = scene.mouse.project( normal=vec(0,0,1), point=vec(0,0,0))
         if mpos != None:
             if mpos.x**2 + mpos.y**2 < 25:
