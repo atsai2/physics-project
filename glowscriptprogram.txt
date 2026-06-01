@@ -1,5 +1,6 @@
 Web VPython 3.2
-gc = gcurve(color=color.red)
+gc1 = gcurve(color=color.red)
+gc2 = gcurve(color = color.blue)
 scene.autoscale = False
 scene.range = 30
 w = 0
@@ -19,7 +20,7 @@ r = ring(pos = vec(-35,20,0), axis = vec(0, 0, 1), radius = 5, thickness = 0.1)
 sphere_list = []
 total_energy = 0
 m = 1
-g = 100
+g = 10000
 help = 0
 mouse = False
 """
@@ -32,7 +33,6 @@ def restart(evt):
     w = 0
     v = 0
     a = 0
-    theta = 0
     for i in sphere_list:
         i.visible = False
     sphere_list = []
@@ -93,10 +93,11 @@ wh = button(bind=dSlope, text = 'draw slope', background=color.white)
 bleh = wtext(text="click and hold mouse inside circle to place balls!")
 #com_label = text(pos = vec(0,0,0), text='COM', align='center', color=color.green)
 labe = sphere(pos = vec(0,0,0), radius = 0.5)
-prevmpos = None
+prevrightmpos = None
+prevleftmpos = None
 prevcom = vec(0,0,0)
 t = 0
-dt = 0.01
+dt = 0.05
 v = 0
 while True:
     rate(100)
@@ -109,22 +110,26 @@ while True:
     if mouse and wh.text != "draw slope":
         global prevmpos
         mpos = scene.mouse.project( normal=vec(0,0,1), point=vec(0,0,0))
-        if prevmpos == None:
-            prevmpos = mpos
-        if mpos != None and mpos.x > prevmpos.x:
+        if prevrightmpos == None:
+            prevrightmpos = mpos
+            prevleftmpos = mpos
+        if mpos != None and mpos.x > prevrightmpos.x:
             slope.append(pos=mpos, radius=0.1, color=color.blue)
-            prevmpos = mpos
+            prevrightmpos = mpos
+        elif mpos!=None and mpos.x < prevleftmpos.x:
+            slope.unshift([dict(pos = mpos, radius = 0.1, color = color.blue)])
+            prevleftmpos = mpos
     #if mybutton.text == "true":
     if mybutton.text == "stop":
-        dist = mag(com)
-        tau = -(dist * sin(help) * g * m)
+        tau = -((com.x - r.pos.x) * g * m)
         a = tau / inertia
         v += a * dt
         help += v * dt
         theta = v * dt
         for i in sphere_list:
             i.rotate(origin = r.pos, angle = theta, axis = vec(0,0,1))
-        gc.plot(t, v)
+        gc1.plot(t, v)
+        gc2.plot(t, a)
         t+=dt
         #print(sphere_list)
 #        com_label.pos = com
