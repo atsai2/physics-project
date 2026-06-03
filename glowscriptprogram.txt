@@ -4,35 +4,70 @@ gc2 = gcurve(color = color.blue)
 scene.autoscale = False
 scene.range = 30
 w = 0
-poY = 0
-poX = 0
-"""
-def pY(evt):
-    global poY
-    poY = evt.value
-    r.pos = vec(poX, poY, 0)
-def pX(evt):
-    global poX
-    poX = evt.value
-    r.pos = vec(poX, poY, 0)
-"""
-r = ring(pos = vec(-35,20,0), axis = vec(0, 0, 1), radius = 5, thickness = 0.1)
-sphere_list = []
+poY = 20
+poX = -35
+vX = 0
+vY = 0
+aX = 0
+aY = 0
+tau = 0
 total_energy = 0
 m = 1
-g = 10000
-help = 0
+g = 10
+a = 0
+theta = 0
 mouse = False
+inertia = 0
+t = 0
+dt = 0.05
+v = 0
+slope = curve()
+sphere_list = []
+
+r = ring(pos = vec(-35,20,0), axis = vec(0, 0, 1), radius = 5, thickness = 0.1)
+scene.bind('mousedown', aaa)
+scene.bind('mouseup', bbb)
+mybutton = button(bind=myfunc, text = 'start', background=color.blue)
+rest = button(bind=restart, text = "restart", background=color.gray)
+wah = button(bind=dMass, text = 'draw mass', background=color.red)
+wh = button(bind=dSlope, text = 'draw slope', background=color.white)
+bleh = wtext(text="click and hold mouse inside circle to place balls!")
+#com_label = text(pos = vec(0,0,0), text='COM', align='center', color=color.green)
+labe = sphere(pos = r.pos, radius = 0.5)
+prevrightmpos = None
+prevleftmpos = None
+prevcom = vec(0,0,0)
+
+def update_position():
+    global poY, poX, vX,vY,aX,aY, tau, inertia, dt, v, theta, dtheta
+#    poX+=vX
+#    poY+=vY
+    vX+=aX
+    vY+=aY
+#    r.pos = vec(poX, poY, 0)
+    r.pos+=vec(vX,vY,0)
+    moveSpheres(vX,vY)
+    a = tau / inertia
+    v += a * dt
+    theta += v * dt
+    dtheta = v * dt
+    for i in sphere_list:
+        i.rotate(origin = r.pos, angle = dtheta, axis = vec(0,0,1))
+
 """
 slid = slider(bind=pY, min=-20, max=20)
 slid2 = slider(bind=pX, min=-30, max=30)
 """
+
 def restart(evt):
-    global w, m, g, help, sphere_list, mouse, gc, labe, v, a, theta
+    global w, m, g, help, sphere_list, mouse, gc, labe, v, a, theta, poX, poY
     gc.data = []
     w = 0
     v = 0
     a = 0
+    poY = 20
+    poX = -35
+    theta = 0
     for i in sphere_list:
         i.visible = False
     sphere_list = []
@@ -42,30 +77,47 @@ def restart(evt):
     help = 0
     mouse = False
     mybutton.text = "start"
+    
 def calc():
     global com, inertia
     inertia = 0
     com = vec(0,0,0)
+    i = False
     for i in sphere_list:
         com += i.pos
         inertia += m * (i.pos.x**2 + i.pos.y**2)
-    com = com / max(len(sphere_list),1)
-    labe.pos = com
+    if i:
+        com = com / max(len(sphere_list),1)
+        labe.pos = com
+#    min_dist = 9999
+#    normal_vector = vec(0,0,0)
+#    for i in range(len(slope['pos'])):
+#        p1 = slope['pos'][i]
+#        p2 = slope['pos'][i+1]
+        
+        
 def myfunc(evt):
     global help
     if mybutton.text == "start":
         mybutton.text = "stop"
         calc()
-        help = atan2(com.x, -com.y)
+        theta = atan2(com.x, -com.y)
     elif mybutton.text == "stop":
         mybutton.text = "start"
+        
 def aaa():
     global mouse
     mouse = True
+    
 def bbb():
     global mouse
     mouse = False
-slope = curve()
+    
+def moveSpheres(dx, dy):
+    for i in sphere_list:
+        i.pos.x +=dx
+        i.pos.y +=dy
+        
 def dSlope():
     if wh.text == "draw slope":
         wh.text = "drawing slope"
@@ -74,6 +126,7 @@ def dSlope():
         scene.range = 30
     else:
         wh.text = "draw slope"
+        
 def dMass():
     if wah.text == "draw mass":
         wah.text = "drawing mass"
@@ -84,21 +137,44 @@ def dMass():
         wah.text = "draw mass"
         scene.center = vec(0,0,0)
         scene.range = 30
-scene.bind('mousedown', aaa)
-scene.bind('mouseup', bbb)
-mybutton = button(bind=myfunc, text = 'start', background=color.blue)
-rest = button(bind = restart, text = "restart", background=color.gray)
-wah = button(bind=dMass, text = 'draw mass', background=color.red)
-wh = button(bind=dSlope, text = 'draw slope', background=color.white)
-bleh = wtext(text="click and hold mouse inside circle to place balls!")
-#com_label = text(pos = vec(0,0,0), text='COM', align='center', color=color.green)
-labe = sphere(pos = vec(0,0,0), radius = 0.5)
-prevrightmpos = None
-prevleftmpos = None
-prevcom = vec(0,0,0)
-t = 0
-dt = 0.05
-v = 0
+        
+def ring_dist(x, y):
+    return ((r.pos.x-x) **2 + (r.pos.y-y) **2) - r.radius**2
+
+def getslope(n):
+    points = slope.slice(n, n+2)
+    dy = points[1].pos.y - points[0].pos.y
+    dx = points[1].pos.x - points[0].pos.x
+    return dy / dx
+    
+def ground_collision():
+    for n in range(slope.npoints - 1):
+        points = slope.slice(n, n+2)
+        for i in range(10):
+            x = points[0].pos.x * (1 - i/10) + points[1].pos.x * i / 10
+            y = points[0].pos.y * (1 - i/10) + points[1].pos.y * i / 10
+            if ring_dist(x, y) < 0:
+                if getslope(n) == 0:
+                    dpos = vec(0, -1, 0)
+                else:
+                    dpos = vec(getslope(n), -1, 0)
+                dpos.mag = ring_dist(x, y)
+                global aX, aY, vX, vY, dt, v, tau
+                r.pos += dpos
+                moveSpheres(dpos.x, dpos.y)
+                aX += dpos.x
+                aY += dpos.y
+                dir = getslope(n)
+                dir = vec(-1, -dir, 0)
+                dir.mag = dpos.mag
+                dir *= v*r.radius * dt
+                #print(v)
+                #aX+=dir.x
+                #aY+=dir.y
+                #tau -= dir.mag * r.radius * v / abs(v) * 100
+#                vX = 0
+#                vY = 0
+
 while True:
     rate(100)
     calc()
@@ -113,23 +189,29 @@ while True:
         if prevrightmpos == None:
             prevrightmpos = mpos
             prevleftmpos = mpos
-        if mpos != None and mpos.x > prevrightmpos.x:
+        if mpos != None and mpos.x > 0.5 + prevrightmpos.x:
             slope.append(pos=mpos, radius=0.1, color=color.blue)
             prevrightmpos = mpos
-        elif mpos!=None and mpos.x < prevleftmpos.x:
+        elif mpos!=None and mpos.x < prevleftmpos.x - 0.5:
             slope.unshift([dict(pos = mpos, radius = 0.1, color = color.blue)])
             prevleftmpos = mpos
     #if mybutton.text == "true":
     if mybutton.text == "stop":
-        tau = -((com.x - r.pos.x) * g * m)
-        a = tau / inertia
-        v += a * dt
-        help += v * dt
-        theta = v * dt
-        for i in sphere_list:
-            i.rotate(origin = r.pos, angle = theta, axis = vec(0,0,1))
+        tau = 0
+        aX = 0
+        aY = 0
+        tau += -((com.x - r.pos.x) * g * m)
+        aY -= g /100
         gc1.plot(t, v)
         gc2.plot(t, a)
+        ground_collision()
+        update_position()
+        #aX = proj of gravity onto slope
+        #aY = proj of gravity onto slope + angular velocity *
+        # w^2*r is tangential acceleration + acceleration of com 
+        # subtract mu * (mg - proj onto slope) + minimize for 0 
+        #use this to calculate torque + acceleration
+        
         t+=dt
         #print(sphere_list)
 #        com_label.pos = com
