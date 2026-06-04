@@ -52,7 +52,9 @@ def update_position():
         a = tau / inertia
     else:
         a = 0
-    v += a * dt
+    #v += a * dt
+    if not isground:
+        v += a * dt
     theta += v * dt
     dtheta = v * dt
     for i in sphere_list:
@@ -188,7 +190,7 @@ def ground_collision():
 """
 
 def ground_collision():
-    global vX, vY, tau, isground
+    global vX, vY, tau, isground, v
     for n in range(slope.npoints - 1):
         points = slope.slice(n, n+2)
         p1 = points[0].pos
@@ -217,11 +219,22 @@ def ground_collision():
                 #we move it out! 
                 r.pos += n * pen
                 moveSpheres(n.x * pen, n.y * pen)
+                #math
+                grav = vec(0, -g*dt, 0)
+                at = dot(grav, tang)
                 vel = vec(vX, vY, 0)
-                vn = dot(vel, n)
-                #if velocity hates us and wants us dead we kill it hehe
-                if vn < 0:
-                    vel -= vn * n
+                #vn = dot(vel, n)
+                #if vn < 0:
+                #    vel -= vn * n
+                vt = dot(vel, tang)
+                #physics yk
+                vt += at * dt
+                #rolling without slipping (i hope i didnt write it down wrong in my nontebook)
+                v = -vt / r.radius
+                #velocity + updates
+                vel = vt * tang
+                vX = vel.y
+                vY = vel.y
                 vX = vel.x
                 vY = vel.y
                 r_com = com - contact
