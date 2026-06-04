@@ -18,6 +18,7 @@ a = 0
 theta = 0
 mouse = False
 inertia = 0
+isground = False
 t = 0
 dt = 0.05
 v = 0
@@ -187,7 +188,7 @@ def ground_collision():
 """
 
 def ground_collision():
-    global vX, vY, tau
+    global vX, vY, tau, isground
     for n in range(slope.npoints - 1):
         points = slope.slice(n, n+2)
         p1 = points[0].pos
@@ -225,8 +226,11 @@ def ground_collision():
                 vY = vel.y
                 r_com = com - contact
                 tau += -m * g * r_com.x
+                if dist <= r.radius + pen:
+                    isground = True
+                else:
+                    isground = False
                 return
-
 while True:
     rate(100)
     calc()
@@ -252,7 +256,9 @@ while True:
         tau = 0
         aX = 0
         aY = 0
-        #tau += -((com.x - r.pos.x) * g * m)
+        print(isground)
+        if not isground:
+            tau += -((com.x - r.pos.x) * g * m)
         aY -= g /100
         gc1.plot(t, v)
         gc2.plot(t, a)
