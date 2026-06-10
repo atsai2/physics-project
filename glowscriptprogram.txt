@@ -71,23 +71,48 @@ slid2 = slider(bind=pX, min=-30, max=30)
 """
 
 def restart(evt):
-    global w, m, g, help, sphere_list, mouse, gc, labe, v, a, theta, poX, poY
-    gc.data = []
+    global w, m, g, sphere_list, mouse
+    global v, vX, vY, a, aX, aY
+    global theta, tau, inertia, t
+    global is_ground, total_energy
+    global gc1, gc2, gc3
+    global prevrightmpos, prevleftmpos
+
     w = 0
     v = 0
+    vX = 0
+    vY = 0
     a = 0
-    poY = 20
-    poX = -35
+    aX = 0
+    aY = 0
+    tau = 0
     theta = 0
-    for i in sphere_list:
-        i.visible = False
-    sphere_list = []
+    inertia = 0
+    t = 0
     total_energy = 0
+    is_ground = False
+    r.pos = vec(-35,20,0)
+    for s in sphere_list:
+        s.visible = False
+    sphere_list = []
+    labe.pos = r.pos
+    slope.clear()
+    prevrightmpos = None
+    prevleftmpos = None
     m = 1
-    g = 100
-    help = 0
+    g = 10
     mouse = False
+    gc1.delete()
+    gc2.delete()
+    gc3.delete()
+    gc1 = gcurve(color=color.red)
+    gc2 = gcurve(color=color.blue)
+    gc3 = gcurve(color=color.green)
     mybutton.text = "start"
+    wah.text = "draw mass"
+    wh.text = "draw slope"
+    scene.center = vec(0,0,0)
+    scene.range = 30
     
 def calc():
     global com, inertia
@@ -107,7 +132,6 @@ def calc():
 #    for i in range(len(slope['pos'])):
 #        p1 = slope['pos'][i]
 #        p2 = slope['pos'][i+1]
-        
         
 def myfunc(evt):
     global help
@@ -258,12 +282,12 @@ def ground_collision():
         v = -vt / r.radius
         rot = vec(v, 0, 0)
         if is_ground:
-            rot.mag = (2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2))**(1/2) / r.radius
+            rot.mag = abs((2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2)))**(1/2) / r.radius
         v = rot.x
         #velocity + updates
         vel = vt * tang
         if is_ground:
-            vel.mag = (2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2))**(1/2)
+            vel.mag = abs((2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2)))**(1/2)
 #        vel.mag = velocity
 #        velo = vec(v, 0, 0)
 #        velo.mag = velocity / r.radius
