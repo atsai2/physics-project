@@ -1,32 +1,12 @@
 Web VPython 3.2
-
-w = graph(
-    title = "yay",
-    xtitle = "Time (s)",
-    ytitle = "Angular Velocity (rad/s)",
-    width = 600,
-    height = 300
-)
-
-a = graph(
-    title = "yay",
-    xtitle = "Time (s)",
-    ytitle = "Angular Acceleration (rad/s^2)",
-    width = 600,
-    height = 300
-)
-
-e = graph(
-    title = "Energy",
-    xtitle = "Time (s)",
-    ytitle = "Energy (J)",
-    width = 600,
-    height = 300
-)
-
-gc1 = gcurve(graph = w, color=color.red, label = 'ω')
-gc2 = gcurve(graph = a, color = color.blue, label = 'α')
-gc3 = gcurve(graph = e, color = color.green, label = "Total Energy")
+my_graph = graph(title = "Energy vs. Time", xtitle = "Time(s)", ytitle = "Energy(J)") 
+gc1 = gcurve(color=color.red, label = "Kinetic Energy")
+gc2 = gcurve(color = color.blue, label = "Potential Energy")
+gc3 = gcurve(color = color.green, label = "Total Energy")
+velocity_graph = graph(title = "Velocity vs. Time", xtitle = "Time(s)", ytitle = "Velocity(m/s)")
+gc4 = gcurve(color = color.purple, label = "Velocity")
+rotation_graph = graph(title = "Angular Velocity vs. Time", xtitle = "Time(s)", ytitle = "w(rad/s)")
+gc5 = gcurve(color = color.yellow, label = "Angular Velocity")
 scene.autoscale = False
 scene.range = 30
 w = 0
@@ -55,22 +35,11 @@ sphere_list = []
 r = ring(pos = vec(-35,20,0), axis = vec(0, 0, 1), radius = 5, thickness = 0.1)
 scene.bind('mousedown', aaa)
 scene.bind('mouseup', bbb)
-scene.append_to_caption(
-    "Welcome to our very cool and awesome ball simulation!\n"
-    "Draw some masses inside the ball, draw a slope, and press start!\n\n"
-)
-mybutton = button(bind=myfunc, text='start', background=color.green)
-scene.append_to_caption(" ")
-rest = button(bind=restart, text="restart", background=color.gray)
-scene.append_to_caption(" ")
-wah = button(bind=dMass, text='draw mass', background=color.red)
-scene.append_to_caption(" ")
-wh = button(bind=dSlope, text='draw slope', background=color.cyan)
-scene.append_to_caption("\n\n")
-bleh = wtext(text="Click and hold the mouse inside the circle to place masses!")
-scene.append_to_caption("\n\n")
-pos = wtext(text = ("Position: " + str(r.pos)))
-scene.append_to_caption("\n\n")
+mybutton = button(bind=myfunc, text = 'start', background=color.blue)
+rest = button(bind=restart, text = "restart", background=color.gray)
+wah = button(bind=dMass, text = 'draw mass', background=color.red)
+wh = button(bind=dSlope, text = 'draw slope', background=color.white)
+bleh = wtext(text="click and hold mouse inside circle to place balls!")
 #com_label = text(pos = vec(0,0,0), text='COM', align='center', color=color.green)
 labe = sphere(pos = r.pos, radius = 0.5)
 prevrightmpos = None
@@ -85,12 +54,9 @@ def update_position():
     if inertia > 0:
         a = tau / inertia
     else:
-        a = 9.81
+        a = 0
     v += a * dt
-    if max(len(sphere_list), 1) == 0:
-        kinetic_energy = 1/2 * m * vec(vX, vY, 0).mag2 + 1/2 * v**2
-    else:
-        kinetic_energy = 1/2 * max(len(sphere_list), 1) * m * vec(vX, vY, 0).mag2 + 1/2 * inertia * v**2
+    kinetic_energy = 1/2 * len(sphere_list) * m * vec(vX, vY, 0).mag2 + 1/2 * inertia * v**2
 #    poX+=vX
 #    poY+=vY 
     r.pos+=vec(vX,vY,0)*dt
@@ -109,7 +75,12 @@ slid2 = slider(bind=pX, min=-30, max=30)
 """
 
 def restart(evt):
-    global w, m, g, sphere_list, mouse, v, vX, vY, a, aX, aY, theta, tau, inertia, t, is_ground, total_energy, gc1, gc2, gc3, prevrightmpos, prevleftmpos
+    global w, m, g, sphere_list, mouse
+    global v, vX, vY, a, aX, aY
+    global theta, tau, inertia, t
+    global is_ground, total_energy
+    global gc1, gc2, gc3, gc4, gc5
+    global prevrightmpos, prevleftmpos
 
     w = 0
     v = 0
@@ -138,9 +109,8 @@ def restart(evt):
     gc1.delete()
     gc2.delete()
     gc3.delete()
-    gc1 = gcurve(color=color.red)
-    gc2 = gcurve(color=color.blue)
-    gc3 = gcurve(color=color.green)
+    gc4.delete()
+    gc5.delete() 
     mybutton.text = "start"
     wah.text = "draw mass"
     wh.text = "draw slope"
@@ -158,11 +128,8 @@ def calc():
         dy = i.pos.y - r.pos.y
         inertia += m * (dx**2 + dy**2)
     if i:
-        com = com / max(max(len(sphere_list), 1),1)
+        com = com / max(len(sphere_list),1)
         labe.pos = com
-    if max(len(sphere_list), 1) == 0:
-        com = r.pos
-        inertia = m * r.radius**2
 #    min_dist = 9999
 #    normal_vector = vec(0,0,0)
 #    for i in range(len(slope['pos'])):
@@ -224,36 +191,6 @@ def getslope(n):
     dx = points[1].pos.x - points[0].pos.x
     return dy / dx
     
-"""
-def ground_collision():
-    for n in range(slope.npoints - 1):
-        points = slope.slice(n, n+2)
-        for i in range(10):
-            x = points[0].pos.x * (1 - i/10) + points[1].pos.x * i / 10
-            y = points[0].pos.y * (1 - i/10) + points[1].pos.y * i / 10
-            if ring_dist(x, y) < 0:
-                if getslope(n) == 0:
-                    dpos = vec(0, -1, 0)
-                else:
-                    dpos = vec(getslope(n), -1, 0)
-                dpos.mag = ring_dist(x, y)
-                global aX, aY, vX, vY, dt, v, tau
-                r.pos += dpos
-                moveSpheres(dpos.x, dpos.y)
-                aX += dpos.x
-                aY += dpos.y
-                dir = getslope(n)
-                dir = vec(-1, -dir, 0)
-                dir.mag = dpos.mag
-                dir *= v*r.radius * dt
-                #print(v)
-                #aX+=dir.x
-                #aY+=dir.y
-                #tau -= dir.mag * r.radius * v / abs(v) * 100
-#                vX = 0
-#                vY = 0
-"""
-
 def ground_collision():
     global vX, vY, tau, isground, v, kinetic_energy, is_ground
     min_dist = 10000
@@ -272,11 +209,12 @@ def ground_collision():
             contact = vec(x, y, 0)
             #we check whether or not this point is inside
             dist = mag(r.pos - contact)
-            if dist < r.radius:
+            if dist <= r.radius:
                 if dist < min_dist:
                     min_dist = dist
                     curr_min = (n, i)
     if curr_min == (-1, -1):
+        is_ground = False
         return
     points = slope.slice(curr_min[0], curr_min[0] + 2)
     p1 = points[0].pos
@@ -284,13 +222,13 @@ def ground_collision():
     dx = p2.x - p1.x
     dy = p2.y - p1.y
     
-        #vector that sloped the slope
+    #vector that sloped the slope
     tang = norm(vec(dx, dy, 0))
     #this is the normal to slope
     n = norm(vec(-dy, dx, 0))
     
     #calculating kinetic energy that would be conserved -- rotation and velocity tangent to slope
-    if min_dist < r.radius:
+    if min_dist <= r.radius:
         #we see how much inside the inside is 
         pen = r.radius - min_dist
 
@@ -299,7 +237,7 @@ def ground_collision():
         moveSpheres(n.x * pen, n.y * pen)
         #energy lost
         if is_ground:
-            potential_energy_gained = n.y * pen * m * max(len(sphere_list), 1) * g
+            potential_energy_gained = n.y * pen * m * len(sphere_list) * g
             kinetic_energy-=potential_energy_gained
         #KE = 1/2 mv^2 + 1/2 Iw^2
         #KE = 1/2 (m + I / r^2) v^2
@@ -317,22 +255,13 @@ def ground_collision():
         #rolling without slipping (i hope i didnt write it down wrong in my nontebook)
         v = -vt / r.radius
         rot = vec(v, 0, 0)
-        #if max(len(sphere_list), 1) == 0:
-        #    kinetic_energy = 1/2 * m * vec(vX,vY,0).mag2
         if is_ground:
-            if max(len(sphere_list), 1) > 0:
-                rot.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2) / r.radius
-            else:
-                rot.mag = abs((2 * kinetic_energy / (m + inertia / r.radius **2)))**(1/2) / r.radius
+            rot.mag = abs((2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2)))**(1/2) / r.radius
         v = rot.x
         #velocity + updates
         vel = vt * tang
         if is_ground:
-            print(kinetic_energy)
-            if max(len(sphere_list), 1) > 0:
-                vel.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2)
-            else:
-                vel.mag = abs((2 * kinetic_energy / (m + inertia / r.radius **2)))**(1/2)
+            vel.mag = abs((2 * kinetic_energy / (len(sphere_list) * m + inertia / r.radius **2)))**(1/2)
 #        vel.mag = velocity
 #        velo = vec(v, 0, 0)
 #        velo.mag = velocity / r.radius
@@ -340,8 +269,6 @@ def ground_collision():
         vX = vel.x
         vY = vel.y
         is_ground = True
-    else:
-        is_ground = False
         #r_com = com - r.pos
         #global inertia
         #tau += -m * inertia * g * tang.y
@@ -353,7 +280,7 @@ def ground_collision():
 while True:
     rate(100)
     calc()
-    pos.text = "Position: " + str(r.pos)
+    pos.text = str(r.pos)
     if mouse and wah.text != "draw mass":
         mpos = scene.mouse.project( normal=vec(0,0,1), point=vec(0,0,0))
         if mpos != None:
@@ -366,7 +293,7 @@ while True:
             prevrightmpos = mpos
             prevleftmpos = mpos
         if mpos != None and mpos.x > 0.5 + prevrightmpos.x:
-            slope.append(pos=mpos, radius=0.1, color=color.cyan)
+            slope.append(pos=mpos, radius=0.1, color=color.blue)
             prevrightmpos = mpos
         elif mpos!=None and mpos.x < prevleftmpos.x - 0.5:
             slope.unshift([dict(pos = mpos, radius = 0.1, color = color.blue)])
@@ -378,23 +305,20 @@ while True:
         aY = 0
 #        if not isground:
 #            tau += -((com.x - r.pos.x) * g * m)
-        if (com == r.pos):
-            tau += -(g * m * max(max(len(sphere_list), 1), 1))
-        else:
-            tau += -((com.x - r.pos.x) * g * m * max(max(len(sphere_list), 1), 1))
+        tau += -((com.x - r.pos.x) * g * m * len(sphere_list))
         aY -= g
-        total_energy2 = 1/2 * inertia * v ** 2 + g * max(len(sphere_list), 1) * com.y * m + 1/2 * m * max(len(sphere_list), 1) * (vX ** 2 + vY ** 2)
         ground_collision()
-        total_energy3 = 1/2 * inertia * v ** 2 + g * max(len(sphere_list), 1) * com.y * m + 1/2 * m * max(len(sphere_list), 1) * (vX ** 2 + vY ** 2)
         update_position()
-        total_energy4 = 1/2 * inertia * v ** 2 + g * max(len(sphere_list), 1) * com.y * m + 1/2 * m * max(len(sphere_list), 1) * (vX ** 2 + vY ** 2)
-        print(total_energy2, total_energy3-total_energy2, total_energy4-total_energy3)
         calc()
-        gc1.plot(t, v)
-        gc2.plot(t, a)
-        total_energy = 1/2 * inertia * v ** 2 + g * max(len(sphere_list), 1) * com.y * m + 1/2 * m * max(len(sphere_list), 1) * (vX ** 2 + vY ** 2)
+        ke = 1/2 * inertia * v ** 2 + 1/2 * m * len(sphere_list) * (vX ** 2 + vY ** 2)
+        pe =  g * len(sphere_list) * com.y * m
+        gc1.plot(t, ke)
+        gc2.plot(t, pe)
+        total_energy =  ke + pe 
         gc3.plot(t, total_energy)
-        #print(tau * v * dt * 10, vY * dt * g * max(len(sphere_list), 1) * m, dot(vec(aX * dt, aY * dt, 0), vec(vX * dt, vY * dt, 0)) * max(len(sphere_list), 1) * 1000)
+        gc4.plot(t, sqrt(vX **2 + vY **2))
+        gc5.plot(t, v)
+        #print(tau * v * dt * 10, vY * dt * g * len(sphere_list) * m, dot(vec(aX * dt, aY * dt, 0), vec(vX * dt, vY * dt, 0)) * len(sphere_list) * 1000)
         #print(tau, v)
         #aX = proj of gravity onto slope
         #aY = proj of gravity onto slope + angular velocity *
