@@ -141,14 +141,18 @@ def calc():
     global com, inertia
     inertia = 0
     com = vec(0,0,0)
-    i = False
+    j = False
     for i in sphere_list:
+        j = True
         com += i.pos
         dx = i.pos.x - r.pos.x
         dy = i.pos.y - r.pos.y
         inertia += m * (dx**2 + dy**2)
-    if i:
+    if j:
         com = com / max(max(len(sphere_list), 1),1)
+        labe.pos = com
+    else:
+        com = r.pos
         labe.pos = com
     if max(len(sphere_list), 1) == 0:
         com = r.pos
