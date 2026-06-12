@@ -39,7 +39,7 @@ mouse = False
 inertia = 0
 is_ground = False
 t = 0
-dt = 0.005
+dt = 0.01
 v = 0
 slope = curve()
 sphere_list = []
@@ -237,9 +237,13 @@ def ground_collision():
         #uh so basically i think i get the dx and dy wow amazing revolutionary
         dx = p2.x - p1.x 
         dy = p2.y - p1.y
-        for i in range(1+int(sqrt(dy**2 + dx**2))*10):
-            x = p1.x * (1 - i / (int(sqrt(dy**2 + dx**2) * 10)+1)) + p2.x * i / int(sqrt(dy**2 + dx**2)* 10+1)
-            y = p1.y * (1 - i / (int(sqrt(dy**2 + dx**2)* 10)+1)) + p2.y * i / int(sqrt(dy**2 + dx**2)* 10+1)
+#        for i in range(1+int(sqrt(dy**2 + dx**2))*10):
+#            x = p1.x * (1 - i / (int(sqrt(dy**2 + dx**2) * 10)+1)) + p2.x * i / int(sqrt(dy**2 + dx**2)* 10+1)
+#            y = p1.y * (1 - i / (int(sqrt(dy**2 + dx**2)* 10)+1)) + p2.y * i / int(sqrt(dy**2 + dx**2)* 10+1)
+        for i in range(10):
+            x = p1.x * (1 - i / 10) + p2.x * i / 10
+            y = p1.y * (1 - i / 10) + p2.y * i / 10
+            
             #this is the point
             contact = vec(x, y, 0)
             #we check whether or not this point is inside
@@ -308,35 +312,19 @@ def ground_collision():
         #    kinetic_energy = 1/2 * m * vec(vX,vY,0).mag2
         if is_ground:
             if conti:
-                if max(len(sphere_list), 1) > 0:
-                    rot.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2) / r.radius
-                else:
-                    rot.mag = abs((2 * kinetic_energy / (m + inertia / r.radius **2)))**(1/2) / r.radius
+                rot.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2) / r.radius
         v = rot.x
         #velocity + updates
         vel = vt * tang
         if is_ground:
             if conti:
-                if len(sphere_list) > 0:
-                    vel.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2)
-                else:
-                    vel.mag = abs((2 * kinetic_energy / (m + inertia / r.radius **2)))**(1/2)
-#        vel.mag = velocity
-#        velo = vec(v, 0, 0)
-#        velo.mag = velocity / r.radius
-#        v = velo.x
+                vel.mag = abs((2 * kinetic_energy / (max(len(sphere_list), 1) * m + inertia / r.radius **2)))**(1/2)
+
         vX = vel.x
         vY = vel.y
         is_ground = True
     else:
         is_ground = False
-        #r_com = com - r.pos
-        #global inertia
-        #tau += -m * inertia * g * tang.y
-#        if dist <= r.radius + pen:
-#            isground = True
-#        else:
-#            isground = False
             
 while True:
     rate(100)
